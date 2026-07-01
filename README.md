@@ -28,6 +28,11 @@ python3 -m http.server 8080
 
 把整个 `edulab-static-site/` 目录作为静态站根目录上传即可。
 
+当前线上地址：
+
+- https://edulab-static-site.vercel.app
+- https://edu.liuwa.xyz
+
 Cloudflare Pages 推荐配置：
 
 ```text
@@ -49,4 +54,3 @@ Build output directory: edulab-static-site
 
 - `vendor/edulab/LICENSE`
 - `vendor/edulab/NOTICE`
-
