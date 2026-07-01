@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduLab 互动课件库</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-soft: #eef3f8;
+      --line: #d8e1ea;
+      --line-strong: #b8c6d6;
+      --text: #16202e;
+      --muted: #627187;
+      --accent: #0b7f8c;
+      --accent-strong: #075c68;
+      --accent-soft: #dff5f4;
+      --math: #9a6a00;
+      --chem: #9c3b21;
+      --geo: #345aa8;
+      --shadow: 0 18px 45px rgba(34, 48, 72, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(12px);
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      min-height: 100vh;
+    }
+
+    .brand {
+      padding: 22px 22px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 12px;
+    }
+
+    .search {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(11, 127, 140, 0.14);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .filter {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--muted);
+      padding: 8px 6px;
+      cursor: pointer;
+      min-height: 36px;
+    }
+
+    .filter.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .lesson-list {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .lesson-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 13px;
+      cursor: pointer;
+      text-align: left;
+      display: grid;
+      gap: 8px;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    }
+
+    .lesson-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 10px 24px rgba(34, 48, 72, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .lesson-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(11, 127, 140, 0.12);
+    }
+
+    .lesson-title {
+      font-weight: 800;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .lesson-desc {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      background: var(--surface-soft);
+      color: var(--muted);
+    }
+
+    .tag.solid {
+      background: #e8eefc;
+      color: var(--geo);
+    }
+
+    .tag.analytic {
+      background: #fff2cc;
+      color: var(--math);
+    }
+
+    .tag.chem {
+      background: #ffe5dc;
+      color: var(--chem);
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--line);
+      padding: 12px 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .stage {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .toolbar {
+      min-width: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .current-title {
+      min-width: 0;
+    }
+
+    .current-title strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .current-title span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: end;
+    }
+
+    .action {
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      padding: 9px 11px;
+      text-decoration: none;
+      cursor: pointer;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    .preview-wrap {
+      min-height: 0;
+      padding: 16px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent 240px),
+        var(--bg);
+    }
+
+    .browser {
+      height: 100%;
+      min-height: 520px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: 38px minmax(0, 1fr);
+    }
+
+    .browser-bar {
+      background: #edf2f7;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.red { background: #df5b57; }
+    .dot.yellow { background: #e6b94f; }
+    .dot.green { background: #54b36a; }
+
+    .path {
+      margin-left: 8px;
+      min-width: 0;
+      flex: 1;
+      height: 22px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 10px;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: #ffffff;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .lesson-list {
+        max-height: 360px;
+      }
+
+      .stage {
+        min-height: 680px;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="sidebar">
+      <header class="brand">
+        <div class="brand-mark">EL</div>
+        <h1>EduLab 互动课件库</h1>
+        <p>固定样例预生成，覆盖立体几何、圆锥曲线与化学反应。</p>
+      </header>
+
+      <section class="controls">
+        <input class="search" id="search" type="search" placeholder="搜索：椭圆、燃烧、正方体、酯化...">
+        <div class="filters" id="filters">
+          <button class="filter active" type="button" data-filter="all">全部</button>
+          <button class="filter" type="button" data-filter="solid">立体</button>
+          <button class="filter" type="button" data-filter="analytic">解析</button>
+          <button class="filter" type="button" data-filter="chem">化学</button>
+        </div>
+      </section>
+
+      <section class="lesson-list" id="lesson-list" aria-label="课件列表"></section>
+
+      <footer class="sidebar-footer">
+        Generated from wy51ai/edulab. License and notice are included under vendor/edulab.
+      </footer>
+    </aside>
+
+    <section class="stage">
+      <header class="toolbar">
+        <div class="current-title">
+          <strong id="current-name"></strong>
+          <span id="current-desc"></span>
+        </div>
+        <div class="actions">
+          <button class="action" id="copy-link" type="button">复制链接</button>
+          <a class="action" id="download-link" download>下载</a>
+          <a class="action primary" id="open-link" target="_blank" rel="noopener">新窗口</a>
+        </div>
+      </header>
+
+      <div class="preview-wrap">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="path" id="current-path"></span>
+          </div>
+          <iframe id="preview" title="课件预览"></iframe>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const lessons = [
+      {
+        id: "solid-pyramid",
+        category: "solid",
+        categoryName: "立体几何",
+        title: "正四棱锥线面角",
+        desc: "建系与向量法求 BE 与平面 PAC 所成角。",
+        path: "lessons/solid/pyramid-line-plane.html",
+        keywords: "正四棱锥 线面角 向量法 平面 PAC"
+      },
+      {
+        id: "solid-cube",
+        category: "solid",
+        categoryName: "立体几何",
+        title: "正方体线面角",
+        desc: "正方体 A1C 与底面 ABCD 所成角。",
+        path: "lessons/solid/cube-line-plane.html",
+        keywords: "正方体 线面角 A1C 底面"
+      },
+      {
+        id: "solid-box",
+        category: "solid",
+        categoryName: "立体几何",
+        title: "长方体体积",
+        desc: "长宽高与体积公式的三维拆解。",
+        path: "lessons/solid/box-volume.html",
+        keywords: "长方体 体积 长宽高"
+      },
+      {
+        id: "analytic-dot",
+        category: "analytic",
+        categoryName: "解析几何",
+        title: "椭圆向量数量积范围",
+        desc: "过焦点动直线驱动 MA 与 MB 数量积读数。",
+        path: "lessons/analytic/ellipse_dot_range.html",
+        keywords: "椭圆 圆锥曲线 数量积 范围 焦点"
+      },
+      {
+        id: "analytic-chord",
+        category: "analytic",
+        categoryName: "解析几何",
+        title: "椭圆焦点弦长范围",
+        desc: "焦点弦随倾斜角变化的长度区间。",
+        path: "lessons/analytic/ellipse_chord_range.html",
+        keywords: "椭圆 焦点弦 弦长 范围"
+      },
+      {
+        id: "analytic-area",
+        category: "analytic",
+        categoryName: "解析几何",
+        title: "椭圆三角形面积最大值",
+        desc: "过焦点弦与原点构成三角形面积读数。",
+        path: "lessons/analytic/ellipse_area_max.html",
+        keywords: "椭圆 三角形 面积 最大值"
+      },
+      {
+        id: "analytic-slope",
+        category: "analytic",
+        categoryName: "解析几何",
+        title: "椭圆斜率之积定值",
+        desc: "中心对称弦关联的斜率乘积定值。",
+        path: "lessons/analytic/ellipse_slopeprod_const.html",
+        keywords: "椭圆 斜率 定值 中心对称弦"
+      },
+      {
+        id: "analytic-parabola",
+        category: "analytic",
+        categoryName: "解析几何",
+        title: "抛物线焦点弦定值",
+        desc: "抛物线焦点弦中的向量数量积定值。",
+        path: "lessons/analytic/parabola_dot_const.html",
+        keywords: "抛物线 焦点弦 数量积 定值"
+      },
+      {
+        id: "analytic-hyperbola",
+        category: "analytic",
+        categoryName: "解析几何",
+        title: "双曲线离心率范围",
+        desc: "双曲线参数变化下的离心率区间。",
+        path: "lessons/analytic/hyperbola_ecc_range.html",
+        keywords: "双曲线 离心率 范围 圆锥曲线"
+      },
+      {
+        id: "chem-ch4",
+        category: "chem",
+        categoryName: "化学反应",
+        title: "甲烷燃烧",
+        desc: "CH4 与 O2 重组生成 CO2 和 H2O。",
+        path: "lessons/chem/combustion_ch4.html",
+        keywords: "甲烷 燃烧 CH4 氧气 二氧化碳 水"
+      },
+      {
+        id: "chem-h2",
+        category: "chem",
+        categoryName: "化学反应",
+        title: "氢气燃烧",
+        desc: "H2 与 O2 点燃生成水的微观过程。",
+        path: "lessons/chem/combustion_h2.html",
+        keywords: "氢气 燃烧 H2 O2 水"
+      },
+      {
+        id: "chem-electrolysis",
+        category: "chem",
+        categoryName: "化学反应",
+        title: "电解水",
+        desc: "通电后水分解为氢气与氧气。",
+        path: "lessons/chem/electrolysis_water.html",
+        keywords: "电解水 通电 分解 氢气 氧气"
+      },
+      {
+        id: "chem-redox",
+        category: "chem",
+        categoryName: "化学反应",
+        title: "钠与氯气氧化还原",
+        desc: "电子转移、离子键与 NaCl 生成。",
+        path: "lessons/chem/redox_na_cl2.html",
+        keywords: "氧化还原 钠 氯气 氯化钠 电子转移"
+      },
+      {
+        id: "chem-ester",
+        category: "chem",
+        categoryName: "化学反应",
+        title: "酯化反应",
+        desc: "羧酸与醇生成酯和水的机理动画。",
+        path: "lessons/chem/esterification.html",
+        keywords: "酯化反应 羧酸 醇 有机 机理"
+      },
+      {
+        id: "chem-glucose",
+        category: "chem",
+        categoryName: "化学反应",
+        title: "葡萄糖有氧氧化",
+        desc: "葡萄糖与氧气生成二氧化碳和水。",
+        path: "lessons/chem/glucose_combustion.html",
+        keywords: "葡萄糖 有氧氧化 细胞呼吸 燃烧"
+      }
+    ];
+
+    const state = {
+      filter: "all",
+      query: "",
+      currentId: new URLSearchParams(location.search).get("lesson") || lessons[0].id
+    };
+
+    const listEl = document.getElementById("lesson-list");
+    const searchEl = document.getElementById("search");
+    const previewEl = document.getElementById("preview");
+    const currentNameEl = document.getElementById("current-name");
+    const currentDescEl = document.getElementById("current-desc");
+    const currentPathEl = document.getElementById("current-path");
+    const openLinkEl = document.getElementById("open-link");
+    const downloadLinkEl = document.getElementById("download-link");
+    const copyLinkEl = document.getElementById("copy-link");
+    const filtersEl = document.getElementById("filters");
+
+    function visibleLessons() {
+      const query = state.query.trim().toLowerCase();
+      return lessons.filter((lesson) => {
+        const categoryOk = state.filter === "all" || lesson.category === state.filter;
+        const text = [lesson.title, lesson.desc, lesson.categoryName, lesson.keywords].join(" ").toLowerCase();
+        const queryOk = !query || text.includes(query);
+        return categoryOk && queryOk;
+      });
+    }
+
+    function setCurrent(id, replaceHistory = false) {
+      const lesson = lessons.find((item) => item.id === id) || lessons[0];
+      state.currentId = lesson.id;
+
+      previewEl.src = lesson.path;
+      currentNameEl.textContent = lesson.title;
+      currentDescEl.textContent = `${lesson.categoryName} · ${lesson.desc}`;
+      currentPathEl.textContent = lesson.path;
+      openLinkEl.href = lesson.path;
+      downloadLinkEl.href = lesson.path;
+      downloadLinkEl.download = lesson.path.split("/").pop();
+
+      const url = new URL(location.href);
+      url.searchParams.set("lesson", lesson.id);
+      if (replaceHistory) {
+        history.replaceState(null, "", url);
+      } else {
+        history.pushState(null, "", url);
+      }
+      renderList();
+    }
+
+    function renderList() {
+      const items = visibleLessons();
+      if (!items.length) {
+        listEl.innerHTML = "<div class='lesson-desc'>没有匹配的课件。</div>";
+        return;
+      }
+
+      listEl.innerHTML = items.map((lesson) => `
+        <button class="lesson-card ${lesson.id === state.currentId ? "active" : ""}" type="button" data-id="${lesson.id}">
+          <span class="meta-row">
+            <span class="tag ${lesson.category}">${lesson.categoryName}</span>
+          </span>
+          <span class="lesson-title">${lesson.title}</span>
+          <span class="lesson-desc">${lesson.desc}</span>
+        </button>
+      `).join("");
+
+      listEl.querySelectorAll(".lesson-card").forEach((card) => {
+        card.addEventListener("click", () => setCurrent(card.dataset.id));
+      });
+    }
+
+    searchEl.addEventListener("input", () => {
+      state.query = searchEl.value;
+      renderList();
+    });
+
+    filtersEl.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-filter]");
+      if (!button) return;
+      state.filter = button.dataset.filter;
+      filtersEl.querySelectorAll(".filter").forEach((item) => {
+        item.classList.toggle("active", item.dataset.filter === state.filter);
+      });
+      renderList();
+    });
+
+    copyLinkEl.addEventListener("click", async () => {
+      const lesson = lessons.find((item) => item.id === state.currentId) || lessons[0];
+      const url = new URL(lesson.path, location.href).href;
+      try {
+        await navigator.clipboard.writeText(url);
+        copyLinkEl.textContent = "已复制";
+      } catch (error) {
+        window.prompt("复制课件链接", url);
+      }
+      window.setTimeout(() => {
+        copyLinkEl.textContent = "复制链接";
+      }, 1400);
+    });
+
+    window.addEventListener("popstate", () => {
+      const id = new URLSearchParams(location.search).get("lesson") || lessons[0].id;
+      setCurrent(id, true);
+    });
+
+    setCurrent(state.currentId, true);
+  </script>
+</body>
+</html>
